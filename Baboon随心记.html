@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Baboon随心记</title>
+  <style>
+    /* 重置样式 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+    }
+
+    .container {
+      width: 100%; /* 宽度占满整个页面 */
+      height: 100%; /* 高度也占满整个页面 */
+      background-color: #fff;
+      padding: 30px; /* 添加内边距 */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    h1 {
+      color: #333;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    #textInput {
+      width: 80%; /* 设置文本框宽度为页面的80% */
+      height: 800px; /* 将文本框高度增加为800px */
+      padding: 15px;
+      font-size: 18px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+      resize: none;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    #textInput:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+      transform: scale(1.05);
+    }
+
+    #fileNameInput {
+      width: 80%; /* 文件名输入框也占更大的宽度 */
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    #fileNameInput:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+      transform: scale(1.05);
+    }
+
+    .button-container {
+      width: 80%; /* 按钮容器宽度对齐其他元素 */ 
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .button-container button {
+      padding: 10px 20px;
+      font-size: 16px;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+      width: 22%; /* 每个按钮宽度相等 */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .button-container button:hover {
+      transform: scale(1.1);
+    }
+
+    /* 按钮颜色 */
+    #saveButton {
+      background-color: #007bff;
+    }
+
+    #saveButton:hover {
+      background-color: #0056b3;
+    }
+
+    #privacyButton {
+      background-color: #28a745;
+    }
+
+    #privacyButton:hover {
+      background-color: #218838;
+    }
+
+    #maskButton {
+      background-color: #ffc107;
+    }
+
+    #maskButton:hover {
+      background-color: #e0a800;
+    }
+
+    #coverButton {
+      background-color: #343a40;
+    }
+
+    #coverButton:hover {
+      background-color: #23272b;
+    }
+
+    #mask, #cover {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.75);
+      z-index: 999;
+      pointer-events: none;
+    }
+
+    #cover {
+      background-color: rgba(0, 0, 0, 0.6);
+    }
+
+    /* 字数显示 */
+    #wordCount {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      opacity: 0;
+      transition: opacity 0.5s ease, transform 0.3s ease;
+      transform: scale(0.8);
+    }
+
+    #wordCount.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* 增加有趣的随机颜色变化 */
+    .random-color {
+      animation: colorChange 3s infinite;
+    }
+
+    @keyframes colorChange {
+      0% {
+        color: #ff6347;
+      }
+      25% {
+        color: #3cb371;
+      }
+      50% {
+        color: #1e90ff;
+      }
+      75% {
+        color: #ff4500;
+      }
+      100% {
+        color: #ff6347;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <textarea id="textInput" placeholder="输入内容"></textarea>
+    <input type="text" id="fileNameInput" placeholder="输入文件名（可选）">
+    <div class="button-container">
+      <button id="saveButton">保存</button>
+      <button id="privacyButton">隐藏</button>
+      <button id="maskButton">模糊</button>
+      <button id="coverButton">夜间模式</button>
+    </div>
+  </div>
+
+  <div id="mask"></div>
+  <div id="cover"></div>
+  <div id="wordCount" class="random-color">字数: 0</div>
+
+  <script>
+    let isPrivacyMode = false;
+    let isMaskMode = false;
+    let isCoverMode = false;
+    let lastClearedContent = '';
+    const textInput = document.getElementById('textInput');
+    const saveButton = document.getElementById('saveButton');
+    const privacyButton = document.getElementById('privacyButton');
+    const maskButton = document.getElementById('maskButton');
+    const coverButton = document.getElementById('coverButton');
+    const fileNameInput = document.getElementById('fileNameInput');
+    const mask = document.getElementById('mask');
+    const cover = document.getElementById('cover');
+    const wordCount = document.getElementById('wordCount');
+
+    // 更新字数
+    function updateWordCount() {
+      const textLength = textInput.value.length;
+      wordCount.textContent = `字数: ${textLength}`;
+      wordCount.classList.add('show');
+      setTimeout(() => {
+        wordCount.classList.remove('show');
+      }, 5000); // 2秒后隐藏字数显示
+    }
+
+    // 监听文本框输入，实时更新字数
+    textInput.addEventListener('input', updateWordCount);
+
+    // 监听键盘事件以实现快捷键功能
+    document.addEventListener('keydown', function (e) {
+      // CTRL+S 保存
+      if (e.ctrlKey && e.key === 's') {
+        e.preventDefault(); // 阻止默认的保存行为
+        saveButton.click(); // 触发保存按钮的点击事件
+      }
+      // CTRL+M 模糊
+      if (e.ctrlKey && e.key === 'm') {
+        e.preventDefault();
+        maskButton.click(); // 触发模糊按钮的点击事件
+      }
+      // CTRL+Y 夜间模式
+      if (e.ctrlKey && e.key === 'y') {
+        e.preventDefault();
+        coverButton.click(); // 触发夜间模式按钮的点击事件
+      }
+      // TAB 隐藏
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        privacyButton.click(); // 触发隐藏按钮的点击事件
+      }
+    });
+
+    saveButton.addEventListener('click', function () {
+      let content = textInput.value;
+      let fileName = fileNameInput.value.trim();
+      if (!fileName) {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        fileName = `${year}-${month}-${day}`;
+      }
+      fileName += '.txt';
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    privacyButton.addEventListener('click', function () {
+      isPrivacyMode = !isPrivacyMode;
+      if (isPrivacyMode) {
+        lastClearedContent = textInput.value;
+        textInput.value = '';
+      } else {
+        textInput.value = lastClearedContent + textInput.value;
+      }
+    });
+
+    maskButton.addEventListener('click', function () {
+      isMaskMode = !isMaskMode;
+      mask.style.display = isMaskMode ? 'block' : 'none';
+    });
+
+    coverButton.addEventListener('click', function () {
+      isCoverMode = !isCoverMode;
+      cover.style.display = isCoverMode ? 'block' : 'none';
+    });
+
+    // 在换行时添加缩进
+    textInput.addEventListener('keydown', function (e) {
+      if (e.keyCode === 13) { // 检测回车键
+        e.preventDefault(); // 阻止默认换行行为
+        const content = this.value;
+        const caretPos = this.selectionStart;
+        const indentation = '\n  '; // 定义缩进
+        this.value = content.slice(0, caretPos) + indentation + content.slice(caretPos);
+        this.selectionStart = this.selectionEnd = caretPos + indentation.length;
+      }
+    });
+  </script>
+</body>
+</html>
