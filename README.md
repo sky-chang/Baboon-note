@@ -1,0 +1,2 @@
+# Baboon-note
+包含了一个html编写的本地码字网站和一个python编写的查看txt文件的脚本
