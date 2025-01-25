@@ -299,17 +299,42 @@
       cover.style.display = isCoverMode ? 'block' : 'none';
     });
 
-    // 在换行时添加缩进
-    textInput.addEventListener('keydown', function (e) {
-      if (e.keyCode === 13) { // 检测回车键
-        e.preventDefault(); // 阻止默认换行行为
-        const content = this.value;
-        const caretPos = this.selectionStart;
-        const indentation = '\n  '; // 定义缩进
-        this.value = content.slice(0, caretPos) + indentation + content.slice(caretPos);
-        this.selectionStart = this.selectionEnd = caretPos + indentation.length;
+ let lastTriggerTime = 0;  // 记录上次触发的时间
+const triggerDelay = 100; // 设置触发的延迟时间（毫秒）
+
+// 在换行时添加缩进
+textInput.addEventListener('keydown', function (e) {
+  const content = this.value;
+  const caretPos = this.selectionStart;
+
+  const currentTime = Date.now();  // 获取当前时间
+
+  // 判断当前时间与上次触发时间的差异是否超过触发延迟
+  if (currentTime - lastTriggerTime >= triggerDelay) {
+    // 使用 setTimeout 来控制延迟
+    if (e.key === 'Enter') {
+      e.preventDefault(); // 阻止默认换行行为
+      const indentation = '\n  '; // 定义缩进
+      this.value = content.slice(0, caretPos) + indentation + content.slice(caretPos);
+      this.selectionStart = this.selectionEnd = caretPos + indentation.length;
+    } else {
+      // 在非回车键的情况下检查最后一行是否为空，若为空则插入缩进
+      const lines = this.value.split('\n');
+      const lastLine = lines[lines.length - 1];
+      
+      if (lastLine === '') {
+        this.value = content + '  '; // 只在最后一行为空时插入缩进
+        this.selectionStart = this.selectionEnd = caretPos + 2;
       }
-    });
+    }
+
+    // 更新上次触发的时间
+    lastTriggerTime = currentTime;
+  }
+});
+
+
+
   </script>
 </body>
 </html>
